@@ -1,5 +1,6 @@
 package com.artillexstudios.axvaults.commands;
 
+import com.artillexstudios.axapi.nms.NMSHandlers;
 import com.artillexstudios.axapi.utils.StringUtils;
 import com.artillexstudios.axvaults.AxVaults;
 import com.artillexstudios.axvaults.converters.PlayerVaultsXConverter;
@@ -10,15 +11,13 @@ import com.artillexstudios.axvaults.vaults.VaultManager;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.block.Block;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
-import revxrsal.commands.annotation.DefaultFor;
-import revxrsal.commands.annotation.Optional;
-import revxrsal.commands.annotation.Range;
-import revxrsal.commands.annotation.Subcommand;
-import revxrsal.commands.bukkit.annotation.CommandPermission;
-import revxrsal.commands.orphan.OrphanCommand;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -27,23 +26,139 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import static com.artillexstudios.axvaults.AxVaults.CONFIG;
-import static com.artillexstudios.axvaults.AxVaults.MESSAGES;
+import static com.artillexstudios.axvaults.AxVaults.*;
 import static com.artillexstudios.axvaults.AxVaults.MESSAGEUTILS;
 
-public class AdminCommand implements OrphanCommand {
+public class AdminCommand implements CommandExecutor, TabCompleter {
 
-    @CommandPermission("axvaults.admin")
-    @DefaultFor({"~", "~ help"})
-    public void help(@NotNull CommandSender sender) {
+    @Override
+    public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
+        if (sender.hasPermission("axvaults.admin")) {
+            MESSAGEUTILS.sendLang(sender, "no-permission");
+            return true;
+        }
+
+        if (args.length == 0) {
+            help(sender);
+            return true;
+        }
+
+        switch (args[0]) {
+            case "help" -> help(sender);
+            case "reload" -> reload(sender);
+            case "forceopen" -> {
+                if (args.length < 2) {
+                    MESSAGEUTILS.sendFormatted(sender, MESSAGES.getString("commands.missing-argument")
+                        .replace("%value%", "/cosmeticboxadmin forceopen <player> [number]"));
+                    return true;
+                }
+
+                Player target = Bukkit.getPlayer(args[1]);
+                Integer number = args.length >= 3 ? Integer.parseInt(args[2]) : null;
+
+                forceOpen(sender, target, number);
+            }
+            case "view" -> {
+                if (!(sender instanceof Player player)) {
+                    sender.sendMessage("Console cannot send this command");
+                    return true;
+                }
+
+                if (args.length < 2) {
+                    MESSAGEUTILS.sendFormatted(sender, MESSAGES.getString("commands.missing-argument")
+                        .replace("%value%", "/cosmeticboxadmin view <player> [number]"));
+                    return true;
+                }
+
+                OfflinePlayer target = getOfflinePlayer(player, args[1]);
+                if (target == null) {
+                    MESSAGEUTILS.sendFormatted(sender, MESSAGES.getString("commands.invalid-player")
+                        .replace("%player%", args[1]));
+                    return true;
+                }
+
+                Integer number = args.length >= 3 ? Integer.parseInt(args[2]) : null;
+
+                view(player, target, number);
+            }
+            case "delete" -> {
+                if (!(sender instanceof Player player)) {
+                    sender.sendMessage("Console cannot send this command");
+                    return true;
+                }
+
+                if (args.length < 3) {
+                    MESSAGEUTILS.sendFormatted(sender, MESSAGES.getString("commands.missing-argument")
+                        .replace("%value%", "/cosmeticboxadmin delete <player> <number>"));
+                    return true;
+                }
+
+                OfflinePlayer target = getOfflinePlayer(player, args[1]);
+                if (target == null) {
+                    MESSAGEUTILS.sendFormatted(sender, MESSAGES.getString("commands.invalid-player")
+                        .replace("%player%", args[1]));
+                    return true;
+                }
+
+                int number = Integer.parseInt(args[2]);
+
+                delete(player, target, number);
+            }
+            case "set" -> {
+                if (!(sender instanceof Player player)) {
+                    sender.sendMessage("Console cannot send this command");
+                    return true;
+                }
+
+                Integer number = args.length >= 2 ? Integer.parseInt(args[1]) : null;
+
+                set(player, number);
+            }
+            case "stats" -> stats(sender);
+            case "converter" -> {
+                if (!(sender instanceof Player player)) {
+                    sender.sendMessage("Console cannot send this command");
+                    return true;
+                }
+
+                converter(player);
+            }
+            case "save" -> {
+                if (!(sender instanceof Player player)) {
+                    sender.sendMessage("Console cannot send this command");
+                    return true;
+                }
+
+                save(player);
+            }
+        }
+
+        return true;
+    }
+
+
+    @Override
+    public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
+        return switch (args.length) {
+            case 1 -> {
+                yield List.of();
+            }
+            default -> List.of();
+        };
+    }
+
+    private void help(@NotNull CommandSender sender) {
         for (String m : MESSAGES.getStringList("help")) {
             sender.sendMessage(StringUtils.formatToString(m));
         }
     }
 
-    @CommandPermission("axvaults.admin.reload")
-    @Subcommand("reload")
     public void reload(@NotNull CommandSender sender) {
+        if (sender.hasPermission("axvaults.admin.reload")) {
+            MESSAGEUTILS.sendLang(sender, "no-permission");
+            return;
+        }
+
         Bukkit.getConsoleSender().sendMessage(StringUtils.formatToString("&#55FF00[AxVaults] &#AAFFAAReloading configuration..."));
         if (!CONFIG.reload()) {
             MESSAGEUTILS.sendLang(sender, "reload.failed", Collections.singletonMap("%file%", "config.yml"));
@@ -64,9 +179,12 @@ public class AdminCommand implements OrphanCommand {
         MESSAGEUTILS.sendLang(sender, "reload.success");
     }
 
-    @CommandPermission("axvaults.admin.forceopen")
-    @Subcommand("forceopen")
-    public void forceOpen(@NotNull CommandSender sender, @NotNull Player player, @Optional @Range(min = 1) Integer number) {
+    public void forceOpen(@NotNull CommandSender sender, @NotNull Player player, Integer number) {
+        if (sender.hasPermission("axvaults.admin.forceopen")) {
+            MESSAGEUTILS.sendLang(sender, "no-permission");
+            return;
+        }
+
         if (number != null) {
             final HashMap<String, String> replacements = new HashMap<>();
             replacements.put("%num%", "" + number);
@@ -88,9 +206,12 @@ public class AdminCommand implements OrphanCommand {
         MESSAGEUTILS.sendLang(sender, "force-open", Collections.singletonMap("%player%", player.getName()));
     }
 
-    @CommandPermission("axvaults.admin.view")
-    @Subcommand("view")
-    public void view(@NotNull Player sender, @NotNull OfflinePlayer player, @Optional @Range(min = 1) Integer number) {
+    public void view(@NotNull Player sender, @NotNull OfflinePlayer player, Integer number) {
+        if (sender.hasPermission("axvaults.admin.view")) {
+            MESSAGEUTILS.sendLang(sender, "no-permission");
+            return;
+        }
+
         final HashMap<String, String> replacements = new HashMap<>();
         replacements.put("%player%", player.getName());
 
@@ -115,9 +236,12 @@ public class AdminCommand implements OrphanCommand {
         });
     }
 
-    @CommandPermission("axvaults.admin.delete")
-    @Subcommand("delete")
     public void delete(@NotNull Player sender, @NotNull OfflinePlayer player, int number) {
+        if (sender.hasPermission("axvaults.admin.delete")) {
+            MESSAGEUTILS.sendLang(sender, "no-permission");
+            return;
+        }
+
         final HashMap<String, String> replacements = new HashMap<>();
         replacements.put("%player%", player.getName());
         replacements.put("%num%", "" + number);
@@ -135,9 +259,12 @@ public class AdminCommand implements OrphanCommand {
         });
     }
 
-    @CommandPermission("axvaults.admin.set")
-    @Subcommand("set")
-    public void set(@NotNull Player sender, @Optional Integer number) {
+    public void set(@NotNull Player sender, Integer number) {
+        if (sender.hasPermission("axvaults.admin.set")) {
+            MESSAGEUTILS.sendLang(sender, "no-permission");
+            return;
+        }
+
         final Block block = sender.getTargetBlockExact(5);
 
         if (block == null) {
@@ -156,9 +283,12 @@ public class AdminCommand implements OrphanCommand {
         });
     }
 
-    @CommandPermission("axvaults.admin.stats")
-    @Subcommand("stats")
     public void stats(@NotNull CommandSender sender) {
+        if (sender.hasPermission("axvaults.admin.stats")) {
+            MESSAGEUTILS.sendLang(sender, "no-permission");
+            return;
+        }
+
         HashMap<String, String> replacements = new HashMap<>();
         replacements.put("%players%", String.valueOf(VaultManager.getPlayers().size()));
         replacements.put("%vaults%", String.valueOf(VaultManager.getVaults().size()));
@@ -174,16 +304,22 @@ public class AdminCommand implements OrphanCommand {
         }
     }
 
-    @CommandPermission("axvaults.admin.converter")
-    @Subcommand("converter PlayerVaultsX")
     public void converter(@NotNull Player sender) {
+        if (sender.hasPermission("axvaults.admin.converter")) {
+            MESSAGEUTILS.sendLang(sender, "no-permission");
+            return;
+        }
+
         new PlayerVaultsXConverter().run();
         MESSAGEUTILS.sendLang(sender, "converter.started");
     }
 
-    @CommandPermission("axvaults.admin.save")
-    @Subcommand("save")
-    public void save(@NotNull Player sender) {
+    private void save(@NotNull Player sender) {
+        if (sender.hasPermission("axvaults.admin.save")) {
+            MESSAGEUTILS.sendLang(sender, "no-permission");
+            return;
+        }
+
         long time = System.currentTimeMillis();
         AxVaults.getThreadedQueue().submit(() -> {
             CompletableFuture<Void>[] futures = new CompletableFuture[VaultManager.getVaults().size()];
@@ -196,5 +332,12 @@ public class AdminCommand implements OrphanCommand {
                 MESSAGEUTILS.sendLang(sender, "save.manual", Map.of("%time%", "" + (System.currentTimeMillis() - time)));
             });
         });
+    }
+
+    private static OfflinePlayer getOfflinePlayer(Player sender, String value) {
+        if (value.equalsIgnoreCase("self") || value.equalsIgnoreCase("me")) return sender;
+        OfflinePlayer player = NMSHandlers.getNmsHandler().getCachedOfflinePlayer(value);
+        if (player == null && !(player = Bukkit.getOfflinePlayer(value)).hasPlayedBefore()) return null;
+        return player;
     }
 }

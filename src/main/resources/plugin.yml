@@ -7,6 +7,14 @@ folia-supported: true
 softdepend:
   - PlaceholderAPI
 
+commands:
+  cosmeticbox:
+    aliases:
+      - box
+  cosmeticboxadmin:
+    aliases:
+      - boxadmin
+
 permissions:
   axvaults.vault.1:
     default: true

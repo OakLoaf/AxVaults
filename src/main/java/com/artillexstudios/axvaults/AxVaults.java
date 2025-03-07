@@ -13,7 +13,8 @@ import com.artillexstudios.axapi.metrics.AxMetrics;
 import com.artillexstudios.axapi.utils.MessageUtils;
 import com.artillexstudios.axapi.utils.StringUtils;
 import com.artillexstudios.axapi.utils.featureflags.FeatureFlags;
-import com.artillexstudios.axvaults.commands.CommandManager;
+import com.artillexstudios.axvaults.commands.AdminCommand;
+import com.artillexstudios.axvaults.commands.PlayerCommand;
 import com.artillexstudios.axvaults.database.Database;
 import com.artillexstudios.axvaults.database.impl.H2;
 import com.artillexstudios.axvaults.database.impl.MySQL;
@@ -92,7 +93,8 @@ public final class AxVaults extends AxPlugin {
         getServer().getPluginManager().registerEvents(new BlockBreakListener(), this);
         getServer().getPluginManager().registerEvents(new InventoryCloseListener(), this);
 
-        CommandManager.load();
+        getCommand("cosmeticbox").setExecutor(new PlayerCommand());
+        getCommand("cosmeticboxadmin").setExecutor(new AdminCommand());
 
         AutoSaveScheduler.start();
         SQLMessaging.start();
