@@ -1,6 +1,7 @@
 package com.artillexstudios.axvaults.database.impl;
 
 import com.artillexstudios.axapi.serializers.Serializers;
+import com.artillexstudios.axapi.utils.StringUtils;
 import com.artillexstudios.axvaults.database.Database;
 import com.artillexstudios.axvaults.placed.PlacedVaults;
 import com.artillexstudios.axvaults.utils.VaultUtils;
@@ -32,6 +33,10 @@ import static com.artillexstudios.axvaults.AxVaults.CONFIG;
 public class MySQL implements Database {
     private HikariDataSource dataSource;
 
+    public MySQL() {
+        Bukkit.getConsoleSender().sendMessage(StringUtils.formatToString("&#FF0000[AxVaults] MySQL is NOT fully supported! It will continue to work and you can ignore this warning, however there might be issues."));
+    }
+
     @Override
     public String getType() {
         return "MySQL";
@@ -49,14 +54,21 @@ public class MySQL implements Database {
         hConfig.setKeepaliveTime(CONFIG.getInt("database.pool.keepalive-time"));
         hConfig.setConnectionTimeout(CONFIG.getInt("database.pool.connection-timeout"));
 
-        hConfig.setDriverClassName("com.mysql.jdbc.Driver");
+        hConfig.setDriverClassName("com.mysql.cj.jdbc.Driver");
         hConfig.setJdbcUrl("jdbc:mysql://" + CONFIG.getString("database.address") + ":" + CONFIG.getString("database.port") + "/" + CONFIG.getString("database.database"));
         hConfig.addDataSourceProperty("user", CONFIG.getString("database.username"));
         hConfig.addDataSourceProperty("password", CONFIG.getString("database.password"));
 
         this.dataSource = new HikariDataSource(hConfig);
 
-        final String CREATE_TABLE = "CREATE TABLE IF NOT EXISTS `axvaults_data`( `id` INT(128) NOT NULL, `uuid` VARCHAR(36) NOT NULL, `storage` LONGBLOB, `icon` VARCHAR(128) );";
+        String CREATE_TABLE = """
+            CREATE TABLE IF NOT EXISTS `axvaults_data`(
+              `id` INT(128) NOT NULL,
+              `uuid` VARCHAR(36) NOT NULL,
+              `storage` LONGBLOB,
+              `icon` VARCHAR(128)
+            );
+        """;
 
         try (Connection conn = dataSource.getConnection(); PreparedStatement stmt = conn.prepareStatement(CREATE_TABLE)) {
             stmt.executeUpdate();
@@ -64,7 +76,13 @@ public class MySQL implements Database {
             ex.printStackTrace();
         }
 
-        final String CREATE_TABLE2 = "CREATE TABLE IF NOT EXISTS `axvaults_blocks` ( `location` VARCHAR(255) NOT NULL, `number` INT, PRIMARY KEY (`location`) );";
+        String CREATE_TABLE2 = """
+            CREATE TABLE IF NOT EXISTS `axvaults_blocks` (
+              `location` VARCHAR(255) NOT NULL,
+              `number` INT,
+              PRIMARY KEY (`location`)
+            );
+        """;
 
         try (Connection conn = dataSource.getConnection(); PreparedStatement stmt = conn.prepareStatement(CREATE_TABLE2)) {
             stmt.executeUpdate();
@@ -72,7 +90,16 @@ public class MySQL implements Database {
             ex.printStackTrace();
         }
 
-        final String CREATE_TABLE3 = "CREATE TABLE IF NOT EXISTS axvaults_messages ( id INT NOT NULL AUTO_INCREMENT, event TINYINT, vault_id INT NOT NULL, uuid VARCHAR(36) NOT NULL, date BIGINT NOT NULL, PRIMARY KEY (id) );";
+        String CREATE_TABLE3 = """
+            CREATE TABLE IF NOT EXISTS axvaults_messages (
+              id INT NOT NULL AUTO_INCREMENT,
+              event TINYINT,
+              vault_id INT NOT NULL,
+              uuid VARCHAR(36) NOT NULL,
+              date BIGINT NOT NULL,
+              PRIMARY KEY (id)
+            );
+        """;
 
         try (Connection conn = dataSource.getConnection(); PreparedStatement stmt = conn.prepareStatement(CREATE_TABLE3)) {
             stmt.executeUpdate();
@@ -83,9 +110,6 @@ public class MySQL implements Database {
 
     @Override
     public CompletableFuture<Void> saveVault(@NotNull Vault vault) {
-        // if the vault was empty when loaded and is still empty, don't bother saving it
-        if (vault.wasItEmpty() && vault.getStorage().isEmpty()) return CompletableFuture.completedFuture(null);
-
         Consumer<byte[]> consumer = bytes -> {
             final String sql = "SELECT * FROM axvaults_data WHERE uuid = ? AND id = ?;";
             try (Connection conn = dataSource.getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -131,16 +155,17 @@ public class MySQL implements Database {
     }
 
     @Override
-    public void loadVaults(@NotNull UUID uuid) {
+    public void loadVaults(@NotNull VaultPlayer vaultPlayer) {
         final String sql = "SELECT * FROM axvaults_data WHERE uuid = ?;";
         try (Connection conn = dataSource.getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, uuid.toString());
+            stmt.setString(1, vaultPlayer.getUUID().toString());
 
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
-                    final ItemStack[] items = Serializers.ITEM_ARRAY.deserialize(rs.getBytes(3));
-                    final Vault vault = new Vault(uuid, rs.getInt(1), rs.getString(4) == null ? null : Material.valueOf(rs.getString(4)));
-                    vault.setContents(items);
+                    ItemStack[] items = Serializers.ITEM_ARRAY.deserialize(rs.getBytes(3));
+                    int id = rs.getInt(1);
+                    Material icon = rs.getString(4) == null ? null : Material.valueOf(rs.getString(4));
+                    new Vault(vaultPlayer, id, icon, items);
                 }
             }
         } catch (SQLException ex) {
@@ -220,7 +245,7 @@ public class MySQL implements Database {
     }
 
     private void sendMessage(@NotNull ChangeType changeType, int id, UUID uuid) {
-        if (CONFIG.getString("multi-server-support", "sql").equalsIgnoreCase("none")) return;
+        if (CONFIG.getString("multi-server-support", "none").equalsIgnoreCase("none")) return;
         
         final String sql = "INSERT INTO axvaults_messages(event, vault_id, uuid, date) VALUES (?, ?, ?, ?);";
         try (Connection conn = dataSource.getConnection(); PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -241,7 +266,7 @@ public class MySQL implements Database {
     private final ArrayList<Integer> acknowledged = new ArrayList<>();
     private final HashMap<Integer, Long> sentFromHere = new HashMap<>();
     public void checkForChanges() { // id, event, vault_id, uuid, date
-        if (CONFIG.getString("multi-server-support", "sql").equalsIgnoreCase("none")) return;
+        if (CONFIG.getString("multi-server-support", "none").equalsIgnoreCase("none")) return;
 
         final String sql = "SELECT * FROM axvaults_messages;";
         try (Connection conn = dataSource.getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {

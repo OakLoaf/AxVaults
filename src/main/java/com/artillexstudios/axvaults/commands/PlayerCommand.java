@@ -1,6 +1,7 @@
 package com.artillexstudios.axvaults.commands;
 
 import com.artillexstudios.axvaults.guis.VaultSelector;
+import com.artillexstudios.axvaults.vaults.Vault;
 import com.artillexstudios.axvaults.vaults.VaultManager;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -46,7 +47,8 @@ public class PlayerCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        VaultManager.getVaultOfPlayer(player, number, vault -> {
+        VaultManager.getPlayer(sender).thenAccept(vaultPlayer -> {
+            Vault vault = vaultPlayer.getVault(number);
             if (vault == null) {
                 MESSAGEUTILS.sendLang(sender, "vault.not-unlocked", replacements);
                 return;

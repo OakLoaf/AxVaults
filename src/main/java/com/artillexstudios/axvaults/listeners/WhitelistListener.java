@@ -14,7 +14,7 @@ import org.bukkit.inventory.ItemStack;
 import static com.artillexstudios.axvaults.AxVaults.CONFIG;
 import static com.artillexstudios.axvaults.AxVaults.MESSAGEUTILS;
 
-public class WhiteListListener implements Listener {
+public class WhitelistListener implements Listener {
 
     @EventHandler(priority = EventPriority.LOW)
     public void onClick(InventoryClickEvent event) {
