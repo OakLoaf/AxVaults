@@ -47,7 +47,7 @@ public class PlayerCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        VaultManager.getPlayer(sender).thenAccept(vaultPlayer -> {
+        VaultManager.getPlayer(player).thenAccept(vaultPlayer -> {
             Vault vault = vaultPlayer.getVault(number);
             if (vault == null) {
                 MESSAGEUTILS.sendLang(sender, "vault.not-unlocked", replacements);

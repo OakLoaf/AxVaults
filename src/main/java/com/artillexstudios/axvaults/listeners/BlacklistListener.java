@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import static com.artillexstudios.axvaults.AxVaults.CONFIG;
 import static com.artillexstudios.axvaults.AxVaults.MESSAGEUTILS;
 
-public class BlackListListener implements Listener {
+public class BlacklistListener implements Listener {
 
     @EventHandler
     public void onClick(@NotNull InventoryClickEvent event) {

@@ -94,7 +94,7 @@ public final class AxVaults extends AxPlugin {
         threadedQueue.submit(() -> database.load());
 
         getServer().getPluginManager().registerEvents(new PlayerListeners(), this);
-        getServer().getPluginManager().registerEvents(new BlackListListener(), this);
+        getServer().getPluginManager().registerEvents(new BlacklistListener(), this);
         getServer().getPluginManager().registerEvents(new WhitelistListener(), this);
         getServer().getPluginManager().registerEvents(new PlayerInteractListener(), this);
         getServer().getPluginManager().registerEvents(new BlockBreakListener(), this);

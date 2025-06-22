@@ -1,6 +1,5 @@
 package com.artillexstudios.axvaults.commands;
 
-import com.artillexstudios.axapi.nms.NMSHandlers;
 import com.artillexstudios.axapi.utils.StringUtils;
 import com.artillexstudios.axvaults.AxVaults;
 import com.artillexstudios.axvaults.converters.PlayerVaultsXConverter;
@@ -347,8 +346,7 @@ public class AdminCommand implements CommandExecutor, TabCompleter {
 
     private static OfflinePlayer getOfflinePlayer(Player sender, String value) {
         if (value.equalsIgnoreCase("self") || value.equalsIgnoreCase("me")) return sender;
-        OfflinePlayer player = NMSHandlers.getNmsHandler().getCachedOfflinePlayer(value);
-        if (player == null && !(player = Bukkit.getOfflinePlayer(value)).hasPlayedBefore()) return null;
-        return player;
+        OfflinePlayer player = Bukkit.getOfflinePlayer(value);
+        return player.hasPlayedBefore() ? player : null;
     }
 }
