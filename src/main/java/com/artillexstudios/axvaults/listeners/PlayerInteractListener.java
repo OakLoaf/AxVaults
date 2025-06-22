@@ -2,6 +2,7 @@ package com.artillexstudios.axvaults.listeners;
 
 import com.artillexstudios.axvaults.guis.VaultSelector;
 import com.artillexstudios.axvaults.placed.PlacedVaults;
+import com.artillexstudios.axvaults.vaults.Vault;
 import com.artillexstudios.axvaults.vaults.VaultManager;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
@@ -58,7 +59,8 @@ public class PlayerInteractListener implements Listener {
             return;
         }
 
-        VaultManager.getVaultOfPlayer(sender, number, vault -> {
+        VaultManager.getPlayer(sender).thenAccept(vaultPlayer -> {
+            Vault vault = vaultPlayer.getVault(number);
             if (vault == null) {
                 MESSAGEUTILS.sendLang(sender, "vault.not-unlocked", replacements);
                 return;
