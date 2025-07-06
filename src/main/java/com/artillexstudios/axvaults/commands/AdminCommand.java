@@ -34,7 +34,7 @@ public class AdminCommand implements CommandExecutor, TabCompleter {
 
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
-        if (sender.hasPermission("axvaults.admin")) {
+        if (!sender.hasPermission("axvaults.admin")) {
             MESSAGEUTILS.sendLang(sender, "no-permission");
             return true;
         }
@@ -155,7 +155,7 @@ public class AdminCommand implements CommandExecutor, TabCompleter {
     }
 
     public void reload(@NotNull CommandSender sender) {
-        if (sender.hasPermission("axvaults.admin.reload")) {
+        if (!sender.hasPermission("axvaults.admin.reload")) {
             MESSAGEUTILS.sendLang(sender, "no-permission");
             return;
         }
@@ -181,7 +181,7 @@ public class AdminCommand implements CommandExecutor, TabCompleter {
     }
 
     public void forceOpen(@NotNull CommandSender sender, @NotNull Player player, Integer number) {
-        if (sender.hasPermission("axvaults.admin.forceopen")) {
+        if (!sender.hasPermission("axvaults.admin.forceopen")) {
             MESSAGEUTILS.sendLang(sender, "no-permission");
             return;
         }
@@ -209,7 +209,7 @@ public class AdminCommand implements CommandExecutor, TabCompleter {
     }
 
     public void view(@NotNull Player sender, @NotNull OfflinePlayer player, Integer number) {
-        if (sender.hasPermission("axvaults.admin.view")) {
+        if (!sender.hasPermission("axvaults.admin.view")) {
             MESSAGEUTILS.sendLang(sender, "no-permission");
             return;
         }
@@ -239,7 +239,7 @@ public class AdminCommand implements CommandExecutor, TabCompleter {
     }
 
     public void delete(@NotNull Player sender, @NotNull OfflinePlayer player, int number) {
-        if (sender.hasPermission("axvaults.admin.delete")) {
+        if (!sender.hasPermission("axvaults.admin.delete")) {
             MESSAGEUTILS.sendLang(sender, "no-permission");
             return;
         }
@@ -261,7 +261,7 @@ public class AdminCommand implements CommandExecutor, TabCompleter {
     }
 
     public void set(@NotNull Player sender, Integer number) {
-        if (sender.hasPermission("axvaults.admin.set")) {
+        if (!sender.hasPermission("axvaults.admin.set")) {
             MESSAGEUTILS.sendLang(sender, "no-permission");
             return;
         }
@@ -285,7 +285,7 @@ public class AdminCommand implements CommandExecutor, TabCompleter {
     }
 
     public void stats(@NotNull CommandSender sender) {
-        if (sender.hasPermission("axvaults.admin.stats")) {
+        if (!sender.hasPermission("axvaults.admin.stats")) {
             MESSAGEUTILS.sendLang(sender, "no-permission");
             return;
         }
@@ -308,7 +308,7 @@ public class AdminCommand implements CommandExecutor, TabCompleter {
     }
 
     public void converter(@NotNull Player sender) {
-        if (sender.hasPermission("axvaults.admin.converter")) {
+        if (!sender.hasPermission("axvaults.admin.converter")) {
             MESSAGEUTILS.sendLang(sender, "no-permission");
             return;
         }
@@ -318,7 +318,7 @@ public class AdminCommand implements CommandExecutor, TabCompleter {
     }
 
     private void save(@NotNull CommandSender sender) {
-        if (sender.hasPermission("axvaults.admin.save")) {
+        if (!sender.hasPermission("axvaults.admin.save")) {
             MESSAGEUTILS.sendLang(sender, "no-permission");
             return;
         }
