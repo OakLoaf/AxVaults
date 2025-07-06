@@ -29,7 +29,11 @@ public class BlacklistListener implements Listener {
         if (!isVault) return;
 
         final Player player = (Player) event.getWhoClicked();
-        final ItemStack it = event.getClick() == ClickType.NUMBER_KEY ? player.getInventory().getItem(event.getHotbarButton()) : event.getCurrentItem();
+        final ItemStack it = switch (event.getClick()) {
+            case ClickType.NUMBER_KEY -> player.getInventory().getItem(event.getHotbarButton());
+            case ClickType.SWAP_OFFHAND -> player.getInventory().getItemInOffHand();
+            default -> event.getCurrentItem();
+        };
         if (it == null) return;
         for (String s : CONFIG.getSection("blacklisted-items").getRoutesAsStrings(false)) {
             boolean banned = false;

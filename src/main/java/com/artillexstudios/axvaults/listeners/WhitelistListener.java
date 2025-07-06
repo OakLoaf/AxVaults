@@ -29,7 +29,11 @@ public class WhitelistListener implements Listener {
         if (!isVault) return;
 
         final Player player = (Player) event.getWhoClicked();
-        final ItemStack it = event.getClick() == ClickType.NUMBER_KEY ? player.getInventory().getItem(event.getHotbarButton()) : event.getCurrentItem();
+        final ItemStack it = switch (event.getClick()) {
+            case ClickType.NUMBER_KEY -> player.getInventory().getItem(event.getHotbarButton());
+            case ClickType.SWAP_OFFHAND -> player.getInventory().getItemInOffHand();
+            default -> event.getCurrentItem();
+        };
         if (it == null) return;
         for (String s : CONFIG.getSection("whitelisted-items").getRoutesAsStrings(false)) {
             if (CONFIG.getString("whitelisted-items." + s + ".material") != null
