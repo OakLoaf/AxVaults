@@ -29,6 +29,10 @@ public class BlacklistListener implements Listener {
         if (!isVault) return;
 
         final Player player = (Player) event.getWhoClicked();
+        if (player.hasPermission("axvaults.admin.bypass.blacklist")) {
+            return;
+        }
+
         final ItemStack it = switch (event.getClick()) {
             case ClickType.NUMBER_KEY -> player.getInventory().getItem(event.getHotbarButton());
             case ClickType.SWAP_OFFHAND -> player.getInventory().getItemInOffHand();
