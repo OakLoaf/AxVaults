@@ -1,6 +1,7 @@
 package com.artillexstudios.axvaults.listeners;
 
 import com.artillexstudios.axvaults.utils.IntRange;
+import com.artillexstudios.axvaults.utils.ItemTransaction;
 import com.artillexstudios.axvaults.vaults.Vault;
 import com.artillexstudios.axvaults.vaults.VaultManager;
 import org.bukkit.entity.Player;
@@ -33,42 +34,55 @@ public class BlacklistListener implements Listener {
             return;
         }
 
-        final ItemStack it = switch (event.getClick()) {
-            case ClickType.NUMBER_KEY -> player.getInventory().getItem(event.getHotbarButton());
-            case ClickType.SWAP_OFFHAND -> player.getInventory().getItemInOffHand();
-            default -> event.getCurrentItem();
+        final ItemTransaction transaction = switch (event.getClick()) {
+            case ClickType.NUMBER_KEY -> new ItemTransaction(
+                player.getInventory().getItem(event.getHotbarButton()),
+                event.getCurrentItem()
+            );
+            case ClickType.SWAP_OFFHAND -> new ItemTransaction(
+                player.getInventory().getItemInOffHand(),
+                event.getCurrentItem()
+            );
+            default -> new ItemTransaction(event.getCurrentItem(), null);
         };
-        if (it == null) return;
-        for (String s : CONFIG.getSection("blacklisted-items").getRoutesAsStrings(false)) {
-            boolean banned = false;
 
+        if (transaction.isEmpty()) return;
+        if (isTransactionBlacklisted(transaction)) {
+            event.setCancelled(true);
+            MESSAGEUTILS.sendLang(player, "banned-item");
+        }
+    }
+
+    private boolean isTransactionBlacklisted(ItemTransaction transaction) {
+        return isItemBlacklisted(transaction.incoming()) || isItemBlacklisted(transaction.outgoing());
+    }
+
+    private boolean isItemBlacklisted(ItemStack item) {
+        if (item == null) return false;
+        for (String s : CONFIG.getSection("blacklisted-items").getRoutesAsStrings(false)) {
             if (CONFIG.getString("blacklisted-items." + s + ".material") != null) {
-                if (!it.getType().toString().equalsIgnoreCase(CONFIG.getString("blacklisted-items." + s + ".material"))) continue;
-                banned = true;
+                if (!item.getType().toString().equalsIgnoreCase(CONFIG.getString("blacklisted-items." + s + ".material"))) continue;
+                return true;
             }
 
             if (CONFIG.getString("blacklisted-items." + s + ".custom-model-data") != null) {
-                if (it.getItemMeta() == null
-                    || !it.getItemMeta().hasCustomModelData()
-                    || !IntRange.valueOf(CONFIG.get("blacklisted-items." + s + ".custom-model-data")).contains(it.getItemMeta().getCustomModelData())
+                if (item.getItemMeta() == null
+                    || !item.getItemMeta().hasCustomModelData()
+                    || !IntRange.valueOf(CONFIG.get("blacklisted-items." + s + ".custom-model-data")).contains(item.getItemMeta().getCustomModelData())
                 ) {
                     continue;
                 }
 
-                banned = true;
+                return true;
             }
 
             if (CONFIG.getString("blacklisted-items." + s + ".name-contains") != null) {
-                if (it.getItemMeta() == null) continue;
-                if (!it.getItemMeta().getDisplayName().contains(CONFIG.getString("blacklisted-items." + s + ".name-contains"))) continue;
-                banned = true;
-            }
-
-            if (banned) {
-                event.setCancelled(true);
-                MESSAGEUTILS.sendLang(player, "banned-item");
-                return;
+                if (item.getItemMeta() == null) continue;
+                if (!item.getItemMeta().getDisplayName().contains(CONFIG.getString("blacklisted-items." + s + ".name-contains"))) continue;
+                return true;
             }
         }
+
+        return false;
     }
 }
