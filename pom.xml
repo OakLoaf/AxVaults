@@ -38,6 +38,7 @@
                             <goal>shade</goal>
                         </goals>
                         <configuration>
+                            <outputFile>D:\Servers\Paper 1.21.1\plugins\update\AxVaults-${project.version}.jar</outputFile>
                             <relocations>
                                 <relocation>
                                     <pattern>com.artillexstudios.axapi</pattern>

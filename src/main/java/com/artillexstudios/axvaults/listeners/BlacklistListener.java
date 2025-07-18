@@ -60,29 +60,58 @@ public class BlacklistListener implements Listener {
     private boolean isItemBlacklisted(ItemStack item) {
         if (item == null) return false;
         for (String s : CONFIG.getSection("blacklisted-items").getRoutesAsStrings(false)) {
-            if (CONFIG.getString("blacklisted-items." + s + ".material") != null) {
-                if (!item.getType().toString().equalsIgnoreCase(CONFIG.getString("blacklisted-items." + s + ".material"))) continue;
-                return true;
+            if (CONFIG.getString("blacklisted-items." + s + ".material") != null
+                && !item.getType().toString().equalsIgnoreCase(CONFIG.getString("blacklisted-items." + s + ".material"))
+            ) {
+                continue;
             }
 
-            if (CONFIG.getString("blacklisted-items." + s + ".custom-model-data") != null) {
-                if (item.getItemMeta() == null
-                    || !item.getItemMeta().hasCustomModelData()
-                    || !IntRange.valueOf(CONFIG.get("blacklisted-items." + s + ".custom-model-data")).contains(item.getItemMeta().getCustomModelData())
-                ) {
-                    continue;
-                }
-
-                return true;
+            if (CONFIG.getString("blacklisted-items." + s + ".custom-model-data") != null
+                && (item.getItemMeta() == null
+                || !item.getItemMeta().hasCustomModelData()
+                || !IntRange.valueOf(CONFIG.get("blacklisted-items." + s + ".custom-model-data")).contains(item.getItemMeta().getCustomModelData()))
+            ) {
+                continue;
             }
 
-            if (CONFIG.getString("blacklisted-items." + s + ".name-contains") != null) {
-                if (item.getItemMeta() == null) continue;
-                if (!item.getItemMeta().getDisplayName().contains(CONFIG.getString("blacklisted-items." + s + ".name-contains"))) continue;
-                return true;
+            if (CONFIG.getString("blacklisted-items." + s + ".name-contains") != null
+                && (item.getItemMeta() == null
+                || !item.getItemMeta().getDisplayName().contains(CONFIG.getString("blacklisted-items." + s + ".name-contains")))
+            ) {
+                continue;
             }
+
+            return true;
         }
 
         return false;
     }
+
+//    private boolean isItemBlacklisted(ItemStack item) {
+//        if (item == null) return false;
+//        for (String s : CONFIG.getSection("blacklisted-items").getRoutesAsStrings(false)) {
+//            if (CONFIG.getString("blacklisted-items." + s + ".material") != null
+//                && !item.getType().toString().equalsIgnoreCase(CONFIG.getString("blacklisted-items." + s + ".material"))) {
+//                continue;
+//            }
+//
+//            if (CONFIG.getString("blacklisted-items." + s + ".custom-model-data") != null) {
+//                if (item.getItemMeta() == null
+//                    || !item.getItemMeta().hasCustomModelData()
+//                    || !IntRange.valueOf(CONFIG.get("blacklisted-items." + s + ".custom-model-data")).contains(item.getItemMeta().getCustomModelData())
+//                ) {
+//                    continue;
+//                }
+//            }
+//
+//            if (CONFIG.getString("blacklisted-items." + s + ".name-contains") != null) {
+//                if (item.getItemMeta() == null) continue;
+//                if (!item.getItemMeta().getDisplayName().contains(CONFIG.getString("blacklisted-items." + s + ".name-contains"))) continue;
+//            }
+//
+//            return true;
+//        }
+//
+//        return false;
+//    }
 }
