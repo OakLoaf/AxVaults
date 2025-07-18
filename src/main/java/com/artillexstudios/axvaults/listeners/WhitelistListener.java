@@ -54,7 +54,7 @@ public class WhitelistListener implements Listener {
     }
 
     private boolean isTransactionWhitelisted(ItemTransaction transaction) {
-        return isItemWhitelisted(transaction.incoming()) || isItemWhitelisted(transaction.outgoing());
+        return isItemWhitelisted(transaction.incoming()) && isItemWhitelisted(transaction.outgoing());
     }
 
     private boolean isItemWhitelisted(ItemStack item) {
@@ -74,9 +74,9 @@ public class WhitelistListener implements Listener {
                 continue;
             }
 
-            return false;
+            return true;
         }
 
-        return true;
+        return false;
     }
 }
